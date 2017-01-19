@@ -14,7 +14,7 @@
       font-family: 'Yanone Kaffeesatz';
       font-weight: normal;
     }
-    .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; font-size: 20px; }
 
     .translation {
       position: absolute;
@@ -148,11 +148,12 @@ import scalikejdbc._
 
 val yearColumn = sqls"year"
 val year = 2017
-val syntax = sqls"select * from scalamatsuri where ${yearColumn} = ${year}"
+val syntax =
+  sqls"select * from scalamatsuri where ${yearColumn} = ${year}"
 ```
 
-`syntax.value` ... `"select * from scalamatsuri where year = ?"`
-`syntax.parameters` ... `List(2017)`
+`syntax.value` ・・・ `"select * from scalamatsuri where year = ?"`
+`syntax.parameters` ・・・ `List(2017)`
 
 <div class="translation">
   SQLSyntaxで、プレースホルダ付きの文とパラメータを分けて保持します。
@@ -237,9 +238,12 @@ create table post(
   posted_at timestamp not null
 );
 
-insert into post(id, body, posted_at) values (1, 'first post', '2016-01-10T10:00:00');
-insert into post(id, body, posted_at) values (2, 'second post', '2016-01-11T10:00:00');
-insert into post(id, body, posted_at) values (3, 'third post', '2016-01-12T10:00:00');
+insert into post(id, body, posted_at) values
+  (1, 'first post', '2016-01-10T10:00:00');
+insert into post(id, body, posted_at) values
+  (2, 'second post', '2016-01-11T10:00:00');
+insert into post(id, body, posted_at) values
+  (3, 'third post', '2016-01-12T10:00:00');
 ```
 
 <div class="translation">
@@ -268,7 +272,9 @@ DB.readOnly { implicit session =>
 ```scala
 val conn: java.sql.Connection = ??? // borrow from connection pool
 
-val stmt = conn.prepareStatement("select body from post where id in (?, ?)")
+val stmt = conn.prepareStatement(
+  "select body from post where id in (?, ?)"
+)
 stmt.setInt(1, 1)
 stmt.setInt(2, 2)
 val rs = stmt.executeQuery()
@@ -320,13 +326,14 @@ import Post.p
 val ids = Seq(1, 2)
 
 DB.readOnly { implicit session =>
-  sql"select ${p.result.*} from ${Post as p} where ${p.id} in (${ids})".map { rs =>
-    Post(
-      id = rs.int(p.resultName.id),
-      body = rs.string(p.resultName.body),
-      postedAt = rs.jodaDateTime(p.resultName.postedAt)
-    )
-  }.list.apply()
+  sql"select ${p.result.*} from ${Post as p} where ${p.id} in (${ids})"
+    .map { rs =>
+      Post(
+        id = rs.int(p.resultName.id),
+        body = rs.string(p.resultName.body),
+        postedAt = rs.jodaDateTime(p.resultName.postedAt)
+      )
+    }.list.apply()
 }
 ```
 =>
@@ -549,7 +556,7 @@ could not find implicit value for evidence parameter of type scalikejdbc.TypeBin
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
-  implicit val postIdTypeBinder: TypeBinder[PostId] = TypeBinder.int.map(PostId)
+  implicit val postIdTypeBinder = TypeBinder.int.map(PostId)
 
   val p = this.syntax("p")
 
@@ -592,8 +599,8 @@ Implicit ParameterBinderFactory[PostId] is missing.
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
-  implicit val postIdTypeBinder: TypeBinder[PostId] = TypeBinder.int.map(PostId)
-  implicit val postIdParameterBinderFactory: ParameterBinderFactory[PostId] = ParameterBinderFactory {
+  implicit val postIdTypeBinder = TypeBinder.int.map(PostId)
+  implicit val postIdParameterBinderFactory = ParameterBinderFactory {
     postId => (stmt, idx) => stmt.setInt(idx, postId.value)
   }
 
@@ -612,8 +619,7 @@ object Post extends SQLSyntaxSupport[Post] {
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
-  implicit val postIdBinders: Binders[PostId] = Binders.int.xmap(PostId.apply, _.value)
-
+  implicit val postIdBinders = Binders.int.xmap(PostId.apply, _.value)
   val p = this.syntax("p")
 
   def apply(rs: WrappedResultSet): Post = autoConstruct(rs, p.resultName)
@@ -626,8 +632,9 @@ object Post extends SQLSyntaxSupport[Post] {
 ##### Attention
 - Since `ParameterBinderFactory` does not affect to String interpolation, following code compiles but does not work properly.
 
+
 ```scala
-sql"select ${p.result.*} from ${Post as p} where ${p.id} in (${ids})".map(Post(_)).list.apply()
+sql"select ${p.result.*} from ${Post as p} where ${p.id} in (${ids})"
 ```
 
 <div class="translation">
@@ -675,15 +682,16 @@ case class Tag(
 
 object Tag extends SQLSyntaxSupport[Tag] {
   import Post.postIdBinders
-  implicit val tagIdBinders: Binders[TagId] = Binders.int.xmap(TagId.apply, _.value)
+  implicit val tagIdBinders = Binders.int.xmap(TagId.apply, _.value)
 
   val t = this.syntax("t")
 
   def apply(rs: WrappedResultSet): Tag = autoConstruct(rs, t.resultName)
 
-  // if primary key of tag table exists in ResultSet, Some(Tag) otherwise None.
-  // typical usage of this method is to extract Tag from outer join queries.
-  def opt(rs: WrappedResultSet): Option[Tag] = rs.intOpt(t.resultName.postId).map(_ => apply(rs))
+  // if PKey of tag table exists in ResultSet, Some(Tag) otherwise None.
+  // typical usage is to extract Tag from outer join queries.
+  def opt(rs: WrappedResultSet): Option[Tag] =
+    rs.intOpt(t.resultName.postId).map(_ => apply(rs))
 }
 ```
 
@@ -749,12 +757,13 @@ For example, pagination with join.
 If you want to paginate `post left join tag` by 2 posts, you will write SQL like following.
 
 ```sql
-select subp.id, subp.body, subp.posted_at, tag.id, tag.post_id, tag.name from
+select subp.id, subp.body, subp.posted_at, tag.id, tag.post_id, tag.name
+from
   (select id, body, posted_at from post
     where id in (1, 2, 3)
     limit 2 offset 0
   ) subp
-  left join tag on subp.id = tag.post_id;
+left join tag on subp.id = tag.post_id;
 ```
 
 <div class="translation">
@@ -766,7 +775,7 @@ ScalikeJDBC provides syntax to build subqueries type safely.
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
-  implicit val postIdTypeBinder: TypeBinder[PostId] = TypeBinder.int.map(PostId)
+  implicit val postIdTypeBinder = TypeBinder.int.map(PostId)
 
   val p = this.syntax("p")
 
@@ -774,7 +783,8 @@ object Post extends SQLSyntaxSupport[Post] {
 
   // subquery syntax generates different alias name than p.resultName
   // use this overload to extract Post with arbitrary ResultName provider.
-  def apply(rs: WrappedResultSet, rn: ResultName[Post]): Post = autoConstruct(rs, rn)
+  def apply(rs: WrappedResultSet, rn: ResultName[Post]): Post =
+    autoConstruct(rs, rn)
 }
 ```
 
@@ -804,9 +814,7 @@ DB.readOnly { implicit session =>
   }
     .one(Post(_, subp(p).resultName))
     .toMany(Tag.opt)
-    .map(PostWithTags(_, _))
-    .list
-    .apply()
+    .map(PostWithTags(_, _)).list.apply()
 }
 ```
 
@@ -862,11 +870,9 @@ case class PostWithRank(
   post: Post,
   latestPostRank: Int
 )
-
 import extension._, sqlsEx.rank, sqls.orderBy, Post.p
 
 val rankAlias = sqls"rnk"
-
 DB.readOnly { implicit session =>
   withSQL {
     select(
@@ -919,7 +925,9 @@ from post p
 <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
 </script>
 <script>
-  var slideshow = remark.create();
+  var slideshow = remark.create({
+    highlightStyle: "tomorrow-night-eighties"
+  });
 </script>
 </body>
 </html>
