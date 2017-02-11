@@ -40,9 +40,9 @@
   - Scala developer at Opt, Inc.
   - twitter, github : @ocadaruma
 - OSS
-  - ocadaruma/sbt-youtube
-  - opt-tech/chronoscala
-  - opt-tech/redshift-fake-driver
+  - [ocadaruma/sbt-youtube](https://github.com/ocadaruma/sbt-youtube)
+  - [opt-tech/chronoscala](https://github.com/opt-tech/chronoscala)
+  - [opt-tech/redshift-fake-driver](https://github.com/opt-tech/redshift-fake-driver)
 
 <div class="translation">
   自己紹介: 株式会社オプトの岡田です。
@@ -84,6 +84,8 @@
 - We adopt ScalikeJDBC for most Scala projects.
   - cf. http://tech-magazine.opt.ne.jp/entry/2016/06/15/205650
 
+<img src="./ss-magazine.png" alt="alt" width="80%">
+
 <div class="translation">
   オプトではほとんどのScalaプロジェクトでScalikeJDBCを採用しています。
 </div>
@@ -94,7 +96,7 @@
 ### Disclaimer
 #### What I'm not going to talk
 - Other statement than SELECT (INSERT, UPDATE, DELETE, DDLs, ...)
-- Other featuers than SQL building/execution
+- Other features than SQL building/execution
   - e.g. Play integration, scalikejdbc-streams
 
 <div class="translation">
@@ -164,7 +166,7 @@ val syntax =
 #### parameters to `sqls` interpolation are embedded by following rules:
 1. If parameter is `SQLSyntax`, embedded to `value` directly.
 2. Otherwise, a placeholder is inserted into parameter's position and parameter is added to `parameters`.
-  - Exceptionally, If parameter is Seq(x1, x2, x3), it is expanded to `value: "?, ?, ?", parameters = Seq(x1, x2, x3)`.
+  - As an exception, if parameter is Seq(x1, x2, x3), it is expanded to value:"?, ?, ?", parameters = Seq(x1, x2, x3).
 
 #### Summary
 - Now you can create arbitrary PreparedStatement-ready SQL.
@@ -294,7 +296,7 @@ while (rs.next()) {
 </div>
 ---
 ## 4. SQLSyntaxSupport
-### `SQLSyntaxSupport` provides
+### SQLSyntaxSupport provides
 - Type safe table/column references.
 - Functions to remove boilerplates.
 
@@ -388,7 +390,7 @@ These are a part of the syntaxes `p` provides.
 ---
 ### SQLSyntaxSupport
 
-#### Column reference is checked at compile time. following code does not compile.
+#### Column reference is checked at compile time. The following code does not compile.
 
 ```scala
 p.foo
@@ -405,7 +407,7 @@ p.foo
 ---
 ## 5. Auto Macros
 
-### Following lines in previous example look like boilerplate.
+### The following lines in previous example look like boilerplate.
 
 ```scala
 Post(
@@ -467,7 +469,7 @@ def apply(rs: WrappedResultSet): Post = new Post(
 </div>
 ---
 ## 6. QueryDSL
-- You can refer table and table's columns type safely, but you still build SQL by writing string directly.
+- You can refer table and table's columns type safely, but still build SQL by writing string directly.
 - `ScalikeJDBC` provides DSL to build SQL more type safely.
 
 ```scala
@@ -528,7 +530,7 @@ case class Post(
 </div>
 ---
 ### TypeBinder
-#### Following code does not compile.
+#### The following code does not compile.
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
@@ -551,7 +553,7 @@ could not find implicit value for evidence parameter of type scalikejdbc.TypeBin
 ---
 ### TypeBinder
 - Compilation fails because ScalikeJDBC doesn't know how to instantiate `PostId` from `int` column value.
-- You have to locate `TypeBinder` instance to `implicit` search scope.
+- `TypeBinder` instance has to be located to `implicit` search scope.
   - `TypeBinder` is an type class.
 
 ```scala
@@ -594,15 +596,14 @@ Implicit ParameterBinderFactory[PostId] is missing.
 ---
 ### ParameterBinderFactory
 - Compilation fails because ScalikeJDBC doesn't know how to set `PostId` to PreparedStatement.
-- You have to locate `ParameterBinderFactory` instance to `implicit` search scope.
+- `ParameterBinderFactory` instance has to be located to `implicit` search scope.
   - `ParameterBinderFactory` is an type class too.
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
   implicit val postIdTypeBinder = TypeBinder.int.map(PostId)
-  implicit val postIdParameterBinderFactory = ParameterBinderFactory {
-    postId => (stmt, idx) => stmt.setInt(idx, postId.value)
-  }
+  implicit val postIdParameterBinderFactory = ParameterBinderFactory
+    .intParameterBinderFactory.contramap[PostId](_.value)
 
   val p = this.syntax("p")
 
@@ -738,7 +739,7 @@ List(
 )
 ```
 
-- ScalikeJDBC automatically combine Tags have same `Post` in ResultSet.
+- ScalikeJDBC automatically aggregates Tags related to the same `Post` in the ResultSet.
 - Equality of Posts is based on `equals` method by default.
 - You can change this behavior by extending `EntityEquality`.
 
@@ -830,11 +831,11 @@ DB.readOnly { implicit session =>
 ## 10. Extend SQLSyntax (Window Functions)
 Basically, ScalikeJDBC provides DBMS-independent syntaxes.
 
-Sometimes you might use DMBS-specific features like MySQL's bulk insertion or Postgresql's OLAP functions.
+Sometimes you might use DBMS-specific features like MySQL's bulk insertion or Postgresql's OLAP functions.
 
 You can extend DSL by defining your own syntax.
 
-Here, let's define syntax for window functions. (examples in this section do not work with H2, MySQL. Use Postgresql)
+Here, let's define syntax for window functions. (Examples in this section do not work with H2, MySQL. Use Postgresql)
 
 <div class="translation">
   SQLSyntaxを拡張してWindow関数を定義してみましょう。
@@ -913,7 +914,7 @@ from post p
 ---
 ## Conclusion
 ### As we have seen,
-  - ScalikeJDBC provides flexisible and boilerplate-free APIs to build SQL.
+  - ScalikeJDBC provides flexisible, type safe and boilerplate-free APIs to build SQL.
   - ScalikeJDBC's design is simple and clear.
 
 ## Let's enjoy ScalikeJDBC !
