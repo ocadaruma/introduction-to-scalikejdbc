@@ -117,12 +117,12 @@ Add following lines to your `build.sbt`.
 
 ```scala
 libraryDependencies ++= Seq(
-  "org.scalikejdbc" %% "scalikejdbc" % "3.0.0-M4",
+  "org.scalikejdbc" %% "scalikejdbc" % "3.0.0-RC2",
 
   // for convenience
-  "org.scalikejdbc" %% "scalikejdbc-interpolation-macro" % "2.5.0",
-  "org.scalikejdbc" %% "scalikejdbc-syntax-support-macro" % "2.5.0",
-  "org.scalikejdbc" %% "scalikejdbc-config" % "2.5.0",
+  "org.scalikejdbc" %% "scalikejdbc-interpolation-macro" % "3.0.0-RC2",
+  "org.scalikejdbc" %% "scalikejdbc-syntax-support-macro" % "3.0.0-RC2",
+  "org.scalikejdbc" %% "scalikejdbc-config" % "3.0.0-RC2",
 
   // any jdbc driver
   "com.h2database" % "h2" % "1.4.193",
@@ -692,7 +692,7 @@ object Tag extends SQLSyntaxSupport[Tag] {
   // if PKey of tag table exists in ResultSet, Some(Tag) otherwise None.
   // typical usage is to extract Tag from outer join queries.
   def opt(rs: WrappedResultSet): Option[Tag] =
-    rs.intOpt(t.resultName.postId).map(_ => apply(rs))
+    rs.intOpt(t.resultName.id).map(_ => apply(rs))
 }
 ```
 
@@ -797,23 +797,23 @@ object Post extends SQLSyntaxSupport[Post] {
 ```scala
 import Post.p, Tag.t
 
-val subp = SubQuery.syntax("subp").include(p)
+val sub = SubQuery.syntax("sub").include(p)
 
 val ids = Seq(PostId(1), PostId(2), PostId(3))
 val (limit, offset) = (2, 0)
 
 DB.readOnly { implicit session =>
   withSQL {
-    select(subp.result.*, t.result.*).from(
+    select(sub.result.*, t.result.*).from(
       selectFrom(Post as p)
         .where.in(p.id, ids)
         .limit(limit).offset(offset)
-        .as(subp)
+        .as(sub)
     )
       .leftJoin(Tag as t)
-      .on(subp(p).id, t.postId)
+      .on(sub(p).id, t.postId)
   }
-    .one(Post(_, subp(p).resultName))
+    .one(Post(_, sub(p).resultName))
     .toMany(Tag.opt)
     .map(PostWithTags(_, _)).list.apply()
 }

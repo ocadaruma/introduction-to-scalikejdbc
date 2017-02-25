@@ -50,20 +50,20 @@ object Post extends SQLSyntaxSupport[Post] {
   def allWithTags(ids: Seq[PostId], limit: Int, offset: Int)(implicit session: DBSession): Seq[PostWithTags] = {
     import Tag.t
 
-    val subp = SubQuery.syntax("subp").include(p)
+    val sub = SubQuery.syntax("sub").include(p)
 
     withSQL {
-      select(subp.result.*, t.result.*).from(
+      select(sub.result.*, t.result.*).from(
         selectFrom(Post as p)
           .where.in(p.id, ids)
           .limit(limit)
           .offset(offset)
-          .as(subp)
+          .as(sub)
       )
         .leftJoin(Tag as t)
-        .on(subp(p).id, t.postId)
+        .on(sub(p).id, t.postId)
     }
-      .one(Post(_, subp(p).resultName))
+      .one(Post(_, sub(p).resultName))
       .toMany(Tag.opt)
       .map(PostWithTags(_, _))
       .list

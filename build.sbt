@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.11.8"
 
-val scalikejdbcVersion = "3.0.0-M4"
+val scalikejdbcVersion = "3.0.0-RC2"
 libraryDependencies ++= Seq(
   "org.scalikejdbc" %% "scalikejdbc",
   "org.scalikejdbc" %% "scalikejdbc-interpolation-macro",

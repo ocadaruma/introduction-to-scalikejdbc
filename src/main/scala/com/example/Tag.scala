@@ -20,5 +20,5 @@ object Tag extends SQLSyntaxSupport[Tag] {
   val t = this.syntax("t")
 
   def apply(rs: WrappedResultSet): Tag = autoConstruct(rs, t.resultName)
-  def opt(rs: WrappedResultSet): Option[Tag] = rs.intOpt(t.resultName.postId).map(_ => apply(rs))
+  def opt(rs: WrappedResultSet): Option[Tag] = rs.intOpt(t.resultName.id).map(_ => apply(rs))
 }
