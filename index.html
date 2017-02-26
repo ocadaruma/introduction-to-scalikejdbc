@@ -554,7 +554,7 @@ could not find implicit value for evidence parameter of type scalikejdbc.TypeBin
 ### TypeBinder
 - Compilation fails because ScalikeJDBC doesn't know how to instantiate `PostId` from `int` column value.
 - `TypeBinder` instance has to be located to `implicit` search scope.
-  - `TypeBinder` is an type class.
+  - `TypeBinder` is a type class.
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
@@ -597,7 +597,7 @@ Implicit ParameterBinderFactory[PostId] is missing.
 ### ParameterBinderFactory
 - Compilation fails because ScalikeJDBC doesn't know how to set `PostId` to PreparedStatement.
 - `ParameterBinderFactory` instance has to be located to `implicit` search scope.
-  - `ParameterBinderFactory` is an type class too.
+  - `ParameterBinderFactory` is a type class too.
 
 ```scala
 object Post extends SQLSyntaxSupport[Post] {
